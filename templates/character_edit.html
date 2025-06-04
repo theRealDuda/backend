@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dungeons & Dragons Character Creator</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=MedievalSharp&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        heading: ['Cinzel', 'serif'],
+                        body: ['MedievalSharp', 'cursive']
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/css">
+        :root {
+            --parchment: #f5eedc;
+            --ink: #2a0d00;
+            --border: #c19d5c;
+            --highlight: #ffd700;
+        }
+        
+        body {
+            font-family: 'MedievalSharp', cursive;
+            background: #2a0d00 url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23441a03' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E");
+        }
+        
+        .parchment-container {
+            background-color: var(--parchment);
+            border: 8px double var(--border);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c0a374' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .parchment-container::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(circle, transparent 40%, var(--parchment) 200%), 
+                        linear-gradient(180deg, rgba(251,227,187,0.3), rgba(193,157,92,0.2));
+            pointer-events: none;
+        }
+        
+        .heading {
+            font-family: 'Cinzel', serif;
+            color: var(--ink);
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
+            position: relative;
+            letter-spacing: 0.05em;
+        }
+        
+        .attribute-box {
+            background: rgba(251, 227, 187, 0.6);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .attribute-box:hover {
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.2), 0 0 10px rgba(255, 215, 0, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .modifier-badge {
+            background: linear-gradient(145deg, #d5b85a, #ffd700);
+            color: #2a0d00;
+            border: 2px solid #a87c2b;
+            border-radius: 50%;
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+        
+        .dragon-icon {
+            font-family: 'Cinzel', serif;
+            font-size: 1.5rem;
+            color: #8c0d00;
+        }
+        
+        input, select, textarea {
+            font-family: 'MedievalSharp', cursive;
+            background: rgba(251, 227, 187, 0.8);
+            border: 2px solid var(--border);
+            color: var(--ink);
+            padding: 0.5rem;
+            border-radius: 4px;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            box-shadow: 0 0 5px rgba(255, 215, 0, 0.8);
+            border-color: #a87c2b;
+        }
+        
+        .btn-primary {
+            font-family: 'Cinzel', serif;
+            background: linear-gradient(145deg, #8c0d00, #2a0d00);
+            color: #f5eedc;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 4px;
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(145deg, #ad0d00, #4a0d00);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn-primary:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .attribute-input {
+            width: 3.5rem;
+            font-size: 1.5rem;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .draggable-element {
+            cursor: move;
+            user-select: none;
+            transition: transform 0.2s;
+        }
+        
+        .draggable-element:active {
+            transform: scale(1.05);
+        }
+        
+        .section-header {
+            border-bottom: 3px double var(--border);
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+        }
+        
+        .modifier-display {
+            min-width: 2.5rem;
+        }
+    </style>
+</head>
+<body class="bg-amber-900 min-h-screen p-4">
+    <!-- Hero Section -->
+    <div class="max-w-5xl mx-auto mb-10 text-center">
+        <h1 class="heading text-4xl md:text-5xl text-amber-200 mb-2">DUNGEONS & DRAGONS</h1>
+        <h2 class="heading text-2xl md:text-3xl text-amber-300 mt-0">Character Creator</h2>
+        <div class="dragon-icon mt-2">⚔️ 🐉 🗡️</div>
+    </div>
+
+    <!-- Main Container - Parchment Style -->
+    <div class="parchment-container p-6 md:p-10 mx-auto max-w-6xl rounded-md">
+        <form id="characterForm" 
+              hx-post="/api/characters" 
+              hx-target="#responseMessage" 
+              hx-indicator="#loadingIndicator"
+              hx-swap="outerHTML" 
+              class="space-y-8">
+            
+            <!-- Basic Info Section -->
+            <div>
+                <h3 class="heading text-2xl section-header">Character Information</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label class="block font-bold mb-2">Character Name</label>
+                        <input type="text" name="name" value="{{ .character.Name }}" required 
+                               class="w-full" placeholder="e.g., Elora Shadowgrace">
+                    </div>
+                    <div>
+                        <label class="block font-bold mb-2">Race</label>
+                        <select name="race" class="w-full">
+                            <option value="">Select Race</option>
+                            <option value="Human" {{if eq .character.Race "Human"}}selected{{end}}>Human</option>
+                            <option value="Elf">Elf</option>
+                            <option value="Dwarf">Dwarf</option>
+                            <option value="Halfling">Halfling</option>
+                            <option value="Gnome">Gnome</option>
+                            <option value="Half-Elf">Half-Elf</option>
+                            <option value="Half-Orc">Half-Orc</option>
+                            <option value="Tiefling">Tiefling</option>
+                            <option value="Dragonborn">Dragonborn</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-bold mb-2">Class</label>
+                        <select name="class" class="w-full">
+                            <option value="">Select Class</option>
+                            <option value="Barbarian">Barbarian</option>
+                            <option value="Bard">Bard</option>
+                            <option value="Cleric">Cleric</option>
+                            <option value="Druid">Druid</option>
+                            <option value="Fighter">Fighter</option>
+                            <option value="Monk">Monk</option>
+                            <option value="Paladin">Paladin</option>
+                            <option value="Ranger">Ranger</option>
+                            <option value="Rogue">Rogue</option>
+                            <option value="Sorcerer">Sorcerer</option>
+                            <option value="Warlock">Warlock</option>
+                            <option value="Wizard">Wizard</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                    <div>
+                        <label class="block font-bold mb-2">Level</label>
+                        <input type="number" name="level" value="{{ .character.Level }}" min="1" max="20" 
+                               class="w-20" required>
+                    </div>
+                    <div>
+                        <label class="block font-bold mb-2">Alignment</label>
+                        <select name="alignment" class="w-full">
+                            <option value="Lawful Good">Lawful Good</option>
+                            <option value="Neutral Good">Neutral Good</option>
+                            <option value="Chaotic Good">Chaotic Good</option>
+                            <option value="Lawful Neutral">Lawful Neutral</option>
+                            <option value="Neutral">Neutral</option>
+                            <option value="Chaotic Neutral">Chaotic Neutral</option>
+                            <option value="Lawful Evil">Lawful Evil</option>
+                            <option value="Neutral Evil">Neutral Evil</option>
+                            <option value="Chaotic Evil">Chaotic Evil</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Attributes Section -->
+            <div>
+                <h3 class="heading text-2xl section-header">Core Attributes</h3>
+                <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
+                    <!-- STR -->
+                    <div class="attribute-box p-4 text-center draggable-element">
+                        <h4 class="heading text-lg">Strength</h4>
+                        <input type="number" name="strength" min="3" max="18" value="10" 
+                               class="attribute-input" 
+                               hx-trigger="input, change" 
+                               hx-get="/calculate?attr=strength" 
+                               hx-target="#strMod" 
+                               hx-swap="innerHTML">
+                        <div class="text-lg font-bold">Modifier</div>
+                        <div id="strMod" class="modifier-badge w-12 h-12 mx-auto flex items-center justify-center text-xl">
+                            +0
+                        </div>
+                    </div>
+                    
+                    <!-- DEX -->
+                    <div class="attribute-box p-4 text-center draggable-element">
+                        <h4 class="heading text-lg">Dexterity</h4>
+                        <input type="number" name="dexterity" min="3" max="18" value="10" 
+                               class="attribute-input" 
+                               hx-trigger="input, change" 
+                               hx-get="/calculate?attr=dexterity" 
+                               hx-target="#dexMod" 
+                               hx-swap="innerHTML">
+                        <div class="text-lg font-bold">Modifier</div>
+                        <div id="dexMod" class="modifier-badge w-12 h-12 mx-auto flex items-center justify-center text-xl">
+                            +0
+                        </div>
+                    </div>
+                    
+                    <!-- CON -->
+                    <div class="attribute-box p-4 text-center draggable-element">
+                        <h4 class="heading text-lg">Constitution</h4>
+                        <input type="number" name="constitution" min="3" max="18" value="10" 
+                               class="attribute-input" 
+                               hx-trigger="input, change" 
+                               hx-get="/calculate?attr=constitution" 
+                               hx-target="#conMod" 
+                               hx-swap="innerHTML">
+                        <div class="text-lg font-bold">Modifier</div>
+                        <div id="conMod" class="modifier-badge w-12 h-12 mx-auto flex items-center justify-center text-xl">
+                            +0
+                        </div>
+                    </div>
+                    
+                    <!-- INT -->
+                    <div class="attribute-box p-4 text-center draggable-element">
+                        <h4 class="heading text-lg">Intelligence</h4>
+                        <input type="number" name="intelligence" min="3" max="18" value="10" 
+                               class="attribute-input" 
+                               hx-trigger="input, change" 
+                               hx-get="/calculate?attr=intelligence" 
+                               hx-target="#intMod" 
+                               hx-swap="innerHTML">
+                        <div class="text-lg font-bold">Modifier</div>
+                        <div id="intMod" class="modifier-badge w-12 h-12 mx-auto flex items-center justify-center text-xl">
+                            +0
+                        </div>
+                    </div>
+                    
+                    <!-- WIS -->
+                    <div class="attribute-box p-4 text-center draggable-element">
+                        <h4 class="heading text-lg">Wisdom</h4>
+                        <input type="number" name="wisdom" min="3" max="18" value="10" 
+                               class="attribute-input" 
+                               hx-trigger="input, change" 
+                               hx-get="/calculate?attr=wisdom" 
+                               hx-target="#wisMod" 
+                               hx-swap="innerHTML">
+                        <div class="text-lg font-bold">Modifier</div>
+                        <div id="wisMod" class="modifier-badge w-12 h-12 mx-auto flex items-center justify-center text-xl">
+                            +0
+                        </div>
+                    </div>
+                    
+                    <!-- CHA -->
+                    <div class="attribute-box p-4 text-center draggable-element">
+                        <h4 class="heading text-lg">Charisma</h4>
+                        <input type="number" name="charisma" min="3" max="18" value="10" 
+                               class="attribute-input" 
+                               hx-trigger="input, change" 
+                               hx-get="/calculate?attr=charisma" 
+                               hx-target="#chaMod" 
+                               hx-swap="innerHTML">
+                        <div class="text-lg font-bold">Modifier</div>
+                        <div id="chaMod" class="modifier-badge w-12 h-12 mx-auto flex items-center justify-center text-xl">
+                            +0
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Descriptive Fields -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <h4 class="heading text-xl section-header">Background</h4>
+                    <textarea name="background" rows="5" class="w-full" placeholder="Describe your character's history, personality, and motivations...">{{ .character.Background }}</textarea>
+                </div>
+                <div>
+                    <h4 class="heading text-xl section-header">Features & Traits</h4>
+                    <textarea name="features" rows="5" class="w-full" placeholder="Special abilities, racial traits, class features...">{{ .character.Features }}</textarea>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <h4 class="heading text-xl section-header">Skills & Proficiencies</h4>
+                    <textarea name="skills" rows="4" class="w-full" placeholder="List your character's skills..."></textarea>
+                </div>
+                <div>
+                    <h4 class="heading text-xl section-header">Languages</h4>
+                    <textarea name="languages" rows="4" class="w-full" placeholder="List languages your character knows..."></textarea>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 gap-8">
+                <div>
+                    <h4 class="heading text-xl section-header">Inventory & Equipment</h4>
+                    <textarea name="inventory" rows="4" class="w-full" placeholder="Weapons, armor, adventuring gear..."></textarea>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 gap-8">
+                <div>
+                    <h4 class="heading text-xl section-header">Spells & Spellbook</h4>
+                    <textarea name="spells" rows="6" class="w-full" placeholder="List your character's spells and cantrips..."></textarea>
+                </div>
+            </div>
+            
+            <!-- Submission Area -->
+            <div class="flex flex-col items-center pt-6">
+                <button type="submit" class="btn-primary">
+                    🏰 Save Character
+                </button>
+                
+                <div id="loadingIndicator" class="htx-indicator my-3 flex items-center hidden">
+                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-red-800" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Saving character...
+                </div>
+                
+                <div id="responseMessage" class="mt-3"></div>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Floating Dice -->
+    <div class="absolute top-20 right-10 text-3xl opacity-30 draggable-element" draggable="true">🎲</div>
+    <div class="absolute top-60 left-10 text-3xl opacity-30 draggable-element" draggable="true">⚔️</div>
+    <div class="absolute bottom-40 right-20 text-3xl opacity-30 draggable-element" draggable="true">🛡️</div>
+
+    <script>
+        // Function to calculate ability modifier
+        function calculateModifier(score) {
+            return Math.floor((score - 10) / 2);
+        }
+        
+        // Format modifier with sign
+        function formatModifier(modifier) {
+            return modifier >= 0 ? `+${modifier}` : `${modifier}`;
+        }
+        
+        // Simulate the HTMX endpoint for modifier calculation
+        document.body.addEventListener('htmx:beforeRequest', function(evt) {
+            if (evt.detail.pathInfo.requestPath.includes('/calculate')) {
+                const attr = new URLSearchParams(evt.detail.pathInfo.paramString).get('attr');
+                const value = document.querySelector(`input[name=${attr}]`).value;
+                const modifier = calculateModifier(parseInt(value, 10));
+                
+                // Simulate server response with proper delay
+                evt.preventDefault();
+                setTimeout(() => {
+                    htmx.ajax('GET', `/modifier?value=${modifier}`, { target: evt.detail.target });
+                }, 200);
+            }
+        });
+        
+        // Handle form validation
+        document.getElementById('characterForm').addEventListener('submit', function(e) {
+            // Client-side validation for required fields
+            const requiredFields = document.querySelectorAll('[required]');
+            let isValid = true;
+            
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    isValid = false;
+                    field.classList.add('border-red-600');
+                } else {
+                    field.classList.remove('border-red-600');
+                }
+            });
+            
+            if (!isValid) {
+                e.preventDefault();
+                document.getElementById('responseMessage').innerHTML = `
+                    <div class="text-red-700 font-bold bg-red-100 p-3 rounded-md border border-red-300">
+                        Please fill in all required fields!
+                    </div>
+                `;
+            }
+        });
+        
+        // Simulate API response for demonstration
+        document.addEventListener('htmx:afterRequest', function(evt) {
+            const form = document.getElementById('characterForm');
+            
+            // Check if the request was for form submission
+            if (evt.detail.requestConfig.path === '/api/characters') {
+                const loading = document.getElementById('loadingIndicator');
+                loading.classList.add('hidden');
+                
+                // Simulate success response
+                if (true) { // In real app, check response status
+                    document.getElementById('responseMessage').innerHTML = `
+                        <div class="text-green-700 font-bold bg-green-100 p-3 rounded-md border border-green-300">
+                            Character saved successfully! 
+                        </div>
+                    `;
+                    
+                    // Reset the form after success for new character
+                    setTimeout(() => {
+                        form.reset();
+                        
+                        // Reset modifier displays
+                        const modifierIds = ['strMod', 'dexMod', 'conMod', 'intMod', 'wisMod', 'chaMod'];
+                        modifierIds.forEach(id => {
+                            document.getElementById(id).textContent = '+0';
+                        });
+                        
+                        document.getElementById('responseMessage').innerHTML = '';
+                    }, 3000);
+                } else {
+                    // Simulate error response
+                    document.getElementById('responseMessage').innerHTML = `
+                        <div class="text-red-700 font-bold bg-red-100 p-3 rounded-md border border-red-300">
+                            Error saving character. Please try again.
+                        </div>
+                    `;
+                }
+            }
+        });
+        
+        // Initialize attributes modifier calculation
+        document.addEventListener('DOMContentLoaded', function() {
+            const attributes = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
+            
+            attributes.forEach(attr => {
+                const input = document.querySelector(`input[name=${attr}]`);
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+            });
+        });
+        
+        // Make draggable elements actually draggable
+        document.querySelectorAll('.draggable-element').forEach(element => {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            
+            element.onmousedown = dragMouseDown;
+            
+            function dragMouseDown(e) {
+                e.preventDefault();
+                // Get the mouse cursor position at startup
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            }
+            
+            function elementDrag(e) {
+                e.preventDefault();
+                // Calculate the new cursor position
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                
+                // Set the element's new position
+                element.style.top = (element.offsetTop - pos2) + "px";
+                element.style.left = (element.offsetLeft - pos1) + "px";
+            }
+            
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+            }
+        });
+    </script>
+</body>
+</html>

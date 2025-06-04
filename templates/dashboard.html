@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Дашборд персонажей D&D</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom styles that can't be done with Tailwind */
+        .stat-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .stat-circle::before {
+            content: '';
+            position: absolute;
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: #1e293b;
+            z-index: -1;
+        }
+        
+        .character-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+        }
+        
+        .character-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Scrollbar styles */
+        .custom-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background-color: #475569;
+            border-radius: 20px;
+        }
+        
+        /* Fantasy parchment background for modals */
+        .parchment-bg {
+            background-color: #f5e7d0;
+            background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxkZWZzPjxwYXR0ZXJuIGlkPSJwYXR0ZXJuIiB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiIHBhdHRlcm5UcmFuc2Zvcm09InJvdGF0ZSg0NSkiPjxyZWN0IGlkPSJwYXR0ZXJuLWJnIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjVlN2QwIi8+PGxpbmUgeDE9IjAiIHkxPSIwIiB4Mj0iMCIgeTI9IjQwIiBzdHJva2U9IiNlY2RiYTkiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3QgZmlsbD0idXJsKCNwYXR0ZXJuKSIgaGVpZ2h0PSIxMDAlIiB3aWR0aD0iMTAwJSIvPjwvc3ZnPg==');
+            border: 2px solid #d4a762;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row justify-between items-center mb-8">
+            <div class="flex items-center mb-4 md:mb-0">
+                <i class="fas fa-dragon text-amber-500 text-4xl mr-3"></i>
+                <h1 class="text-3xl font-bold bg-gradient-to-r from-amber-500 to-red-600 bg-clip-text text-transparent">
+                    Бросок20
+                </h1>
+            </div>
+            <div class="flex space-x-2">
+                <div class="relative">
+                    <input type="text" id="searchInput" placeholder="Поиск персонажей..." 
+                           class="bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-amber-500 w-full md:w-64">
+                    <i class="fas fa-search absolute left-3 top-3 text-slate-400"></i>
+                </div>
+                <button id="newCharacterBtn" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg flex items-center transition-colors">
+                    <i class="fas fa-plus mr-2"></i> Создать персонажа
+                </button>
+            </div>
+        </header>
+        
+        <!-- Main Content -->
+        <main>
+            <!-- Stats Summary -->
+            <div class="bg-slate-800 rounded-xl p-4 mb-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-slate-700 p-3 rounded-lg flex items-center">
+                    <div class="bg-amber-500 rounded-lg p-3 mr-3">
+                        <i class="fas fa-user text-white"></i>
+                    </div>
+                    <div>
+                        <p class="text-slate-400 text-sm">Всего персонажей</p>
+                        <p class="text-xl font-bold" id="totalCharacters">0</p>
+                    </div>
+                </div>
+                <div class="bg-slate-700 p-3 rounded-lg flex items-center">
+                    <div class="bg-blue-500 rounded-lg p-3 mr-3">
+                        <i class="fas fa-chess-queen text-white"></i>
+                    </div>
+                    <div>
+                        <p class="text-slate-400 text-sm">Средний уровень</p>
+                        <p class="text-xl font-bold" id="avgLevel">0</p>
+                    </div>
+                </div>
+                <div class="bg-slate-700 p-3 rounded-lg flex items-center">
+                    <div class="bg-purple-500 rounded-lg p-3 mr-3">
+                        <i class="fas fa-hat-wizard text-white"></i>
+                    </div>
+                    <div>
+                        <p class="text-slate-400 text-sm">Самый популярный класс</p>
+                        <p class="text-xl font-bold" id="commonClass">-</p>
+                    </div>
+                </div>
+                <div class="bg-slate-700 p-3 rounded-lg flex items-center">
+                    <div class="bg-green-500 rounded-lg p-3 mr-3">
+                        <i class="fas fa-paw text-white"></i>
+                    </div>
+                    <div>
+                        <p class="text-slate-400 text-sm">Самая популярная раса</p>
+                        <p class="text-xl font-bold" id="commonRace">-</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Character Grid -->
+            <div class="mb-6">
+                <h2 class="text-xl font-semibold mb-3 flex items-center">
+                    <i class="fas fa-users mr-2 text-amber-500"></i> Ваши персонажи
+                </h2>
+                <div id="characterGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <!-- Characters will be loaded here -->
+                    <div class="text-center py-10 text-slate-400" id="noCharactersMessage">
+                        <i class="fas fa-user-slash text-4xl mb-2"></i>
+                        <p>Персонажи не найдены</p>
+                        <button id="createFirstCharacterBtn" class="mt-4 text-amber-500 hover:text-amber-400">
+                            Создайте первого персонажа!
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Character Detail Modal -->
+    <div id="characterDetailModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p 4">
+        <div class="parchment-bg rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto custom-scroll fade-in">
+            <div class="p-6">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <h2 class="text-3xl font-bold text-amber-800" id="detailCharacterName">Имя персонажа</h2>
+                        <p class="text-xl text-slate-800" id="detailRaceClass">Раса и класс</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button id="editCharacterBtn" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1 rounded-lg transition-colors">
+                            <i class="fas fa-edit mr-1"></i> Редактировать
+                        </button>
+                        <button id="deleteCharacterBtn" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg transition-colors">
+                            <i class="fas fa-trash mr-1"></i> Удалить
+                        </button>
+                        <button id="closeDetailModal" class="bg-slate-600 hover:bg-slate-700 text-white px-3 py-1 rounded-lg transition-colors">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <button id="exportPdfBtn" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg transition-colors">
+                            <i class="fas fa-file-pdf mr-1"></i> Экспорт в PDF
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <!-- Character Basics -->
+                    <div class="bg-white bg-opacity-70 rounded-lg p-4 border border-amber-200">
+                        <h3 class="text-xl font-semibold text-amber-800 border-b border-amber-200 pb-2 mb-3">Основная информация</h3>
+                        <div class="space-y-3">
+                            <p><span class="font-medium text-slate-800">Уровень:</span> <span class="text-slate-900" id="detailLevel">1</span></p>
+                            <p><span class="font-medium text-slate-800">Предыстория:</span> <span class="text-slate-900" id="detailBackground">Акколит</span></p>
+                            <p><span class="font-medium text-slate-800">Мировоззрение:</span> <span class="text-slate-900" id="detailAlignment">Законопослушный добрый</span></p>
+                            <p><span class="font-medium text-slate-800">Опыт:</span> <span class="text-slate-900" id="detailExperience">0</span></p>
+                        </div>
+                    </div>
+                    
+                    <!-- Ability Scores -->
+                    <div class="bg-white bg-opacity-70 rounded-lg p-4 border border-amber-200">
+                        <h3 class="text-xl font-semibold text-amber-800 border-b border-amber-200 pb-2 mb-3">Характеристики</h3>
+                        <div class="grid grid-cols-3 gap-3">
+                            <div class="text-center">
+                                <div class="stat-circle bg-amber-600 mx-auto mb-1">
+                                    <span class="text-xl font-bold text-white" id="detailStrength">10</span>
+                                </div>
+                                <p class="text-sm font-medium">СИЛ</p>
+                            </div>
+                            <div class="text-center">
+                                <div class="stat-circle bg-blue-600 mx-auto mb-1">
+                                    <span class="text-xl font-bold text-white" id="detailDexterity">10</span>
+                                </div>
+                                <p class="text-sm font-medium">ЛОВ</p>
+                            </div>
+                            <div class="text-center">
+                                <div class="stat-circle bg-green-600 mx-auto mb-1">
+                                    <span class="text-xl font-bold text-white" id="detailConstitution">10</span>
+                                </div>
+                                <p class="text-sm font-medium">ТЕЛ</p>
+                            </div>
+                            <div class="text-center">
+                                <div class="stat-circle bg-purple-600 mx-auto mb-1">
+                                    <span class="text-xl font-bold text-white" id="detailIntelligence">10</span>
+                                </div>
+                                <p class="text-sm font-medium">ИНТ</p>
+                            </div>
+                            <div class="text-center">
+                                <div class="stat-circle bg-yellow-600 mx-auto mb-1">
+                                    <span class="text-xl font-bold text-white" id="detailWisdom">10</span>
+                                </div>
+                                <p class="text-sm font-medium">МДР</p>
+                            </div>
+                            <div class="text-center">
+                                <div class="stat-circle bg-red-600 mx-auto mb-1">
+                                    <span class="text-xl font-bold text-white" id="detailCharisma">10</span>
+                                </div>
+                                <p class="text-sm font-medium">ХАР</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Portrait -->
+                    <div class="flex items-center justify-center bg-white bg-opacity-70 rounded-lg p-4 border border-amber-200">
+                        <div class="w-32 h-32 rounded-full bg-slate-300 flex items-center justify-center text-6xl text-slate-500 overflow-hidden" id="detailPortrait">
+                            <i class="fas fa-user"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Additional Info Tabs -->
+                <div class="mb-6">
+                    <div class="flex border-b border-slate-600">
+                        <button class="tab-btn active px-4 py-2 text-amber-800 font-medium border-b-2 border-amber-600" data-tab="inventory">
+                            <i class="fas fa-backpack mr-1"></i> Инвентарь
+                        </button>
+                        <button class="tab-btn px-4 py-2 text-slate-800 hover:text-amber-800 font-medium" data-tab="spells">
+                            <i class="fas fa-book-spells mr-1"></i> Заклинания
+                        </button>
+                        <button class="tab-btn px-4 py-2 text-slate-800 hover:text-amber-800 font-medium" data-tab="features">
+                            <i class="fas fa-star mr-1"></i> Особенности
+                        </button>
+                    </div>
+                    
+                    <!-- Tab Content -->
+                    <div class="bg-white bg-opacity-70 rounded-b-lg p-4 border-b border-l border-r border-amber-200 min-h-40">
+                        <!-- Inventory Tab -->
+                        <div class="tab-content active" id="inventory-tab">
+                            <ul class="space-y-2" id="detailInventory">
+                                <li class="text-slate-900">- Длинный меч</li>
+                                <li class="text-slate-900">- Щит</li>
+                                <li class="text-slate-900">- Рюкзак</li>
+                                <li class="text-slate-900">- Спальный мешок</li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Spells Tab -->
+                        <div class="tab-content hidden" id="spells-tab">
+                            <div class="flex flex-wrap gap-2" id="detailSpells">
+                                <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">Огненная стрела</span>
+                                <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">Рука мага</span>
+                                <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">Свет</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Features Tab -->
+                        <div class="tab-content hidden" id="features-tab">
+                            <ul class="space-y-2" id="detailFeatures">
+                                <li class="text-slate-900">- Тёмное зрение</li>
+                                <li class="text-slate-900">- Фейское происхождение</li>
+                                <li class="text-slate-900">- Колдовство</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Notes -->
+                <div class="bg-white bg-opacity-70 rounded-lg p-4 border border-amber-200">
+                    <h3 class="text-xl font-semibold text-amber-800 border-b border-amber-200 pb-2 mb-3">Заметки персонажа</h3>
+                    <p class="text-slate-900" id="detailNotes">
+                        Прилежный учёный из Кэндлкипа, ищущий утерянные магические знания.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add/Edit Character Modal -->
+    <div id="characterFormModal" class="fixed inset-0 bg-black z-50 hidden flex items-center justify-center p-4">
+        <div class="parchment bg rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto custom-scroll fade-in">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6 border-b border-amber-200 pb-4">
+                    <h2 class="text-2xl font-bold text-amber-800" id="formModalTitle">Добавить персонажа</h2>
+                    <button id="closeFormModal" class="bg-slate-600 hover:bg-slate-700 text-white px-3 py-1 rounded-lg transition-colors">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <form id="characterForm" class="space-y-4">
+                    <input type="hidden" id="characterId">
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-amber-800 mb-1">Имя персонажа</label>
+                            <input type="text" id="name" name="name" required 
+                                   class="w-full px-3 py-2 border border-slate-300 rounded-md bg-black bg-opacity-70 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                        </div>
+                        
+                        <div>
+                            <label for="race" class="block text-sm font-medium text-amber-800 mb-1">Раса</label>
+                            <select id="race" name="race" required 
+                                    class="w-full px-3 py-2 border border-slate-300 rounded-md bg-black bg-opacity-70 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                                <option value="">Выберите расу</option>
+                                <option value="Human">Человек</option>
+                                <option value="Elf">Эльф</option>
+                                <option value="Dwarf">Дварф</option>
+                                <option value="Halfling">Полурослик</option>
+                                <option value="Dragonborn">Драконорождённый</option>
+                                <option value="Gnome">Гном</option>
+                                <option value="Half-Elf">Полуэльф</option>
+                                <option value="Half-Orc">Полуорк</option>
+                                <option value="Tiefling">Тифлинг</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="class" class="block text-sm font-medium text-amber-800 mb-1">Класс</label>
+                            <select id="class" name="class" required 
+                                    class="w-full px-3 py-2 border border-slate-300 rounded-md bg-black bg-opacity-70 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                                <option value="">Выберите класс</option>
+                                <option value="Barbarian">Варвар</option>
+                                <option value="Bard">Бард</option>
+                                <option value="Cleric">Жрец</option>
+                                <option value="Druid">Друид</option>
+                                <option value="Fighter">Воин</option>
+                                <option value="Monk">Монах</option>
+                                <option value="Paladin">Паладин</option>
+                                <option value="Ranger">Следопыт</option>
+                                <option value="Rogue">Плут</option>
+                                <option value="Sorcerer">Чародей</option>
+                                <option value="Warlock">Колдун</option>
+                                <option value="Wizard">Волшебник</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="level" class="block text-sm font-medium text-amber-800 mb-1">Уровень</label>
+                            <input type="number" id="level" name="level" min="1" max="20" value="1" required 
+                                   class="w-full px-3 py-2 border border-slate-300 rounded-md bg-black bg-opacity-70 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="background" class="block text-sm font-medium text-amber-800 mb-1">Предыстория</label>
+                            <select id="background" name="background" 
+                                    class="w-full px-3 py-2 border border-slate-300 rounded-md bg-black bg-opacity-70 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                                <option value="">Выберите предысторию</option>
+                                <option value="Acolyte">Акколит</option>
+                                <option value="Criminal">Преступник</option>
+                                <option value="Folk Hero">Народный герой</option>
+                                <option value="Noble">Дворянин</option>
+                                <option value="Sage">Мудрец</option>
+                                <option value="Soldier">Солдат</option>
+                                <option value="Urchin">Беспризорник</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="alignment" class="block text-sm font-medium text-amber-800 mb-1">Мировоззрение</label>
+                            <select id="alignment" name="alignment" 
+                                    class="w-full px-3 py-2 border border-slate-300 rounded-md bg-black bg-opacity-70 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                                <option value="">Выберите мировоззрение</option>
+                                <option value="Lawful Good">Законопослушный добрый</option>
+                                <option value="Neutral Good">Нейтральный добрый</option>
+                                <option value="Chaotic Good">Хаотичный добрый</option>
+                                <option value="Lawful Neutral">Законопослушный нейтральный</option>
+                                <option value="True Neutral">Истинно нейтральный</option>
+                                <option value="Chaotic Neutral">Хаотичный нейтральный</option>
+                                <option value="Lawful Evil">Законопослушный злой</option>
+                                <option value="Neutral Evil">Нейтральный злой</option>
+                                <option value="Chaotic Evil">Хаотичный злой</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-lg font-semibold text-amber-800 mb-2 border-b border-amber-200 pb-2">Характеристики</h3>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                            <div>
+                                <label for="strength" class="block text-sm font-medium text-amber-800 mb-1">Сила</label>
+                                <input type="number" id="strength" name="strength" min="1" max="30" value="10" required 
+                                       class="w-full px-3 py-2 border border-slate-300 rounded-md bg-black bg-opacity-70 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                            </div>
+                            <div>
+                                <label for="dexterity" class="block text-sm font-medium text-amber-800 mb-1">Ловкость</label>
+                                <input type="number" id="dexterity" name="dexterity" min="1" max="30" value="10" required 
+                                       class="w-full px-3 py-2 border border-slate-300 rounded-md bg-black bg-opacity-70 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                            </div>
+                            <div>
+                                <label for="constitution" class="block text-sm font-medium text-amber-800 mb-1">Телосложение</label>
+                                <input type="number" id="constitution" name="constitution" min="1" max="30" value="10" required 
+                                       class="w-full px-3 py-2 border border-slate-300 rounded-md bg-black bg-opacity-70 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                            </div>
+                            <div>
+                                <label for="intelligence" class="block text-sm font-medium text-amber-800 mb-1">Интеллект</label>
+                                <input type="number" id="intelligence" name="intelligence" min="1" max="30" value="10" required 
+                                       class="w-full px-3 py-2 border border-slate-300 rounded-md bg-black bg-opacity-70 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                            </div>
+                            <div>
+                                <label for="wisdom" class="block text-sm font-medium text-amber-800 mb-1">Мудрость</label>
+                                <input type="number" id="wisdom" name="wisdom" min="1" max="30" value="10" required 
+                                       class="w-full px-3 py-2 border border-slate-300 rounded-md bg-black bg-opacity-70 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                            </div>
+                            <div>
+                                <label for="charisma" class="block text-sm font-medium text-amber-800 mb-1">Харизма</label>
+                                <input type="number" id="charisma" name="charisma" min="1" max="30" value="10" required 
+                                       class="w-full px-3 py-2 border border-slate-300 rounded-md bg-black bg-opacity-70 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="experience" class="block text-sm font-medium text-amber-800 mb-1">Опыт</label>
+                        <input type="number" id="experience" name="experience" min="0" value="0" 
+                               class="w-full px-3 py-2 border border-slate-300 rounded-md bg-black bg-opacity-70 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label for="inventory" class="block text-sm font-medium text-amber-800 mb-1">Инвентарь (по одному на строку)</label>
+                        <textarea id="inventory" name="inventory" rows="3" 
+                                  class="w-full px-3 py-2 border border-slate-300 rounded-md bg-black bg-opacity-70 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent">- Длинный меч
+- Щит
+- Рюкзак
+- Спальный мешок</textarea>
+                    </div>
+                    
+                    <div>
+                        <label for="spells" class="block text-sm font-medium text-amber-800 mb-1">Заклинания (через запятую)</label>
+                        <input type="text" id="spells" name="spells" 
+                               class="w-full px-3 py-2 border border-slate-300 rounded-md bg-black bg-opacity-70 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent" 
+                               value="Огненная стрела, Рука мага, Свет">
+                    </div>
+                    
+                    <div>
+                        <label for="features" class="block text-sm font-medium text-amber-800 mb-1">Особенности (по одной на строку)</label>
+                        <textarea id="features" name="features" rows="3" 
+                                  class="w-full px-3 py-2 border border-slate-300 rounded-md bg-black bg-opacity-70 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent">- Тёмное зрение
+- Фейское происхождение
+- Колдовство</textarea>
+                    </div>
+                    
+                    <div>
+                        <label for="notes" class="block text-sm font-medium text-amber-800 mb-1">Заметки персонажа</label>
+                        <textarea id="notes" name="notes" rows="3" 
+                                  class="w-full px-3 py-2 border border-slate-300 rounded-md bg-black bg-opacity-70 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent">Прилежный учёный из Кэндлкипа, ищущий утерянные магические знания.</textarea>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 pt-4 border-t border-amber-200">
+                        <button type="button" id="cancelCharacterBtn" class="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors">
+                            Отмена
+                        </button>
+                        <button type="submit" id="saveCharacterBtn" class="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors">
+                            Сохранить персонажа
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="parchment-bg rounded-lg max-w-md w-full p-6 fade-in">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-amber-800">Подтвердите удаление</h3>
+                <button id="closeConfirmModal" class="text-slate-600 hover:text-slate-800">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <p class="text-slate-800 mb-6" id="confirmMessage">Вы уверены, что хотите удалить этого персонажа? Это действие нельзя отменить.</p>
+            <div class="flex justify-end space-x-3">
+                <button id="cancelDeleteBtn" class="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors">
+                    Отмена
+                </button>
+                <button id="confirmDeleteBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                    Удалить
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const characterGrid = document.getElementById('characterGrid');
+        const noCharactersMessage = document.getElementById('noCharactersMessage');
+        const newCharacterBtn = document.getElementById('newCharacterBtn');
+        const createFirstCharacterBtn = document.getElementById('createFirstCharacterBtn');
+        const searchInput = document.getElementById('searchInput');
+        const exportPdfBtn = document.getElementById('exportPdfBtn');
+
+        // Modal Elements
+        const characterDetailModal = document.getElementById('characterDetailModal');
+        const closeDetailModal = document.getElementById('closeDetailModal');
+        const editCharacterBtn = document.getElementById('editCharacterBtn');
+        const deleteCharacterBtn = document.getElementById('deleteCharacterBtn');
+        const characterFormModal = document.getElementById('characterFormModal');
+        const closeFormModal = document.getElementById('closeFormModal');
+        const cancelCharacterBtn = document.getElementById('cancelCharacterBtn');
+        const characterForm = document.getElementById('characterForm');
+        const confirmModal = document.getElementById('confirmModal');
+        const closeConfirmModal = document.getElementById('closeConfirmModal');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+        // Stats Elements
+        const totalCharactersEl = document.getElementById('totalCharacters');
+        const avgLevelEl = document.getElementById('avgLevel');
+        const commonClassEl = document.getElementById('commonClass');
+        const commonRaceEl = document.getElementById('commonRace');
+
+        // App State
+        let characters = [];
+        let currentCharacterId = null;
+
+        async function loadCharactersFromAPI() {
+            try {
+                const res = await fetch('/api/characters');
+                if (res.ok) {
+                    characters = await res.json();
+                } else {
+                    characters = [];
+                }
+                renderCharacters();
+                updateStats();
+                if (characters.length === 0) {
+                    noCharactersMessage.classList.remove('hidden');
+                } else {
+                    noCharactersMessage.classList.add('hidden');
+                }
+            } catch (e) {
+                characters = [];
+                renderCharacters();
+                updateStats();
+                noCharactersMessage.classList.remove('hidden');
+            }
+        }
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCharactersFromAPI();
+            addEventListeners();
+        });
+
+        function addEventListeners() {
+            newCharacterBtn.addEventListener('click', () => openCharacterForm());
+            createFirstCharacterBtn.addEventListener('click', () => openCharacterForm());
+            closeDetailModal.addEventListener('click', () => characterDetailModal.classList.add('hidden'));
+            closeFormModal.addEventListener('click', () => characterFormModal.classList.add('hidden'));
+            cancelCharacterBtn.addEventListener('click', () => characterFormModal.classList.add('hidden'));
+            editCharacterBtn.addEventListener('click', () => {
+                characterDetailModal.classList.add('hidden');
+                openCharacterForm(currentCharacterId);
+            });
+            deleteCharacterBtn.addEventListener('click', () => {
+                confirmModal.classList.remove('hidden');
+            });
+            closeConfirmModal.addEventListener('click', () => confirmModal.classList.add('hidden'));
+            cancelDeleteBtn.addEventListener('click', () => confirmModal.classList.add('hidden'));
+            confirmDeleteBtn.addEventListener('click', async () => {
+                await deleteCharacter(currentCharacterId);
+                confirmModal.classList.add('hidden');
+                characterDetailModal.classList.add('hidden');
+            });
+            searchInput.addEventListener('input', () => {
+                renderCharacters();
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active', 'border-amber-600'));
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.add('text-slate-800'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+                    btn.classList.add('active', 'border-amber-600', 'text-amber-800');
+                    btn.classList.remove('text-slate-800');
+                    const tabId = btn.getAttribute('data-tab');
+                    document.getElementById(`${tabId}-tab`).classList.remove('hidden');
+                });
+            });
+            if (exportPdfBtn) {
+                exportPdfBtn.addEventListener('click', () => {
+                    if (!currentCharacterId) return;
+                    window.open(`/character/export/${currentCharacterId}`, '_blank');
+                });
+            }
+            if (characterForm) {
+                characterForm.addEventListener('submit', async function(e) {
+                    e.preventDefault(); // Prevent default form submission (no reload)
+                    const formData = new FormData(this);
+                    try {
+                        const response = await fetch('/character/save', {
+                            method: 'POST',
+                            body: formData,
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                        });
+                        if (response.ok) {
+                            await loadCharactersFromAPI();
+                            characterFormModal.classList.add('hidden');
+                        } else {
+                            const text = await response.text();
+                            alert(text || "Ошибка сохранения персонажа.");
+                        }
+                    } catch (err) {
+                        alert("Ошибка сети или сервера.");
+                    }
+                });
+            }
+        }
+
+        function renderCharacters() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const filteredCharacters = characters.filter(char =>
+                char.name.toLowerCase().includes(searchTerm) ||
+                char.race.toLowerCase().includes(searchTerm) ||
+                char.class.toLowerCase().includes(searchTerm)
+            );
+            characterGrid.innerHTML = '';
+            if (filteredCharacters.length === 0 && searchTerm) {
+                characterGrid.innerHTML = `
+                    <div class="col-span-full text-center py-10 text-slate-400">
+                        <i class="fas fa-search text-4xl mb-2"></i>
+                        <p>Персонажи не найдены</p>
+                    </div>
+                `;
+                return;
+            }
+            filteredCharacters.forEach(character => {
+                const characterCard = document.createElement('div');
+                characterCard.className = 'character-card rounded-lg p-4 cursor-pointer border border-slate-700 hover:border-amber-500 transition-colors relative';
+                characterCard.innerHTML = `
+                    <div class="flex items-start mb-3">
+                        <div class="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center text-xl mr-3 overflow-hidden">
+                            <i class="fas ${getClassIcon(character.class)} text-amber-500"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-lg text-white">${character.name}</h3>
+                            <p class="text-sm text-slate-300">${character.race} ${character.class}</p>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="bg-amber-600 text-xs px-2 py-1 rounded">Level ${character.level}</span>
+                        <div class="flex space-x-1">
+                            <button class="edit-btn p-1 text-slate-400 hover:text-white" data-id="${character.id}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="delete-btn p-1 text-slate-400 hover:text-red-500" data-id="${character.id}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                characterCard.querySelector('.edit-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    window.location.href = `/character/edit/${character.id}`;
+                });
+                characterCard.querySelector('.delete-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    currentCharacterId = character.id;
+                    confirmModal.classList.remove('hidden');
+                });
+                characterCard.addEventListener('click', () => {
+                    showCharacterDetails(character.id);
+                });
+                characterGrid.appendChild(characterCard);
+            });
+            if (filteredCharacters.length === 0) {
+                noCharactersMessage.classList.remove('hidden');
+            } else {
+                noCharactersMessage.classList.add('hidden');
+            }
+        }
+
+        // Backend delete (implement /character/delete/:id in Go)
+        async function deleteCharacter(id) {
+            try {
+                const res = await fetch(`/character/delete/${id}`, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                if (res.ok) {
+                    await loadCharactersFromAPI();
+                } else {
+                    alert('Ошибка удаления персонажа');
+                }
+            } catch {
+                alert('Ошибка сети при удалении');
+            }
+        }
+
+        // Show character details modal
+        function showCharacterDetails(id) {
+            const character = characters.find(char => char.id === id);
+            if (!character) return;
+            
+            currentCharacterId = id;
+            
+            // Set basic info
+            document.getElementById('detailCharacterName').textContent = character.name;
+            document.getElementById('detailRaceClass').textContent = `${character.race} ${character.class}`;
+            document.getElementById('detailLevel').textContent = character.level;
+            document.getElementById('detailBackground').textContent = character.background || '-';
+            document.getElementById('detailAlignment').textContent = character.alignment || '-';
+            document.getElementById('detailExperience').textContent = character.experience || '0';
+            
+            // Set ability scores
+            document.getElementById('detailStrength').textContent = character.strength;
+            document.getElementById('detailDexterity').textContent = character.dexterity;
+            document.getElementById('detailConstitution').textContent = character.constitution;
+            document.getElementById('detailIntelligence').textContent = character.intelligence;
+            document.getElementById('detailWisdom').textContent = character.wisdom;
+            document.getElementById('detailCharisma').textContent = character.charisma;
+            
+            // Set portrait
+            const portraitEl = document.getElementById('detailPortrait');
+            portraitEl.innerHTML = `<i class="fas ${getClassIcon(character.class)} text-${getClassColor(character.class)}-500"></i>`;
+            
+            // Set inventory
+            const inventoryList = document.getElementById('detailInventory');
+            inventoryList.innerHTML = character.inventory 
+                ? character.inventory.split('\n').map(item => `<li class="text-slate-900">${item}</li>`).join('')
+                : '<li class="text-slate-900">- Н</li>';
+            
+            // Set spells
+            const spellsContainer = document.getElementById('detailSpells');
+            spellsContainer.innerHTML = character.spells 
+                ? character.spells.split(',').map(spell => 
+                    `<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">${spell.trim()}</span>`
+                ).join('')
+                : '<span class="text-slate-600">Нет заклинаний</span>';
+            
+            // Set features
+            const featuresList = document.getElementById('detailFeatures');
+            featuresList.innerHTML = character.features 
+                ? character.features.split('\n').map(feature => `<li class="text-slate-900">${feature}</li>`).join('')
+                : '<li class="text-slate-900">- Нет особенностей</li>';
+            
+            // Set notes
+            document.getElementById('detailNotes').textContent = character.notes || 'Нет заметок.';
+            
+            // Show the modal
+            characterDetailModal.classList.remove('hidden');
+        }
+        
+        // Get icon for class
+        function getClassIcon(className) {
+            const icons = {
+                'Barbarian': 'fa-axe-battle',
+                'Bard': 'fa-music',
+                'Cleric': 'fa-place-of-worship',
+                'Druid': 'fa-leaf',
+                'Fighter': 'fa-swords',
+                'Monk': 'fa-hand-fist',
+                'Paladin': 'fa-shield-halved',
+                'Ranger': 'fa-bow-arrow',
+                'Rogue': 'fa-mask',
+                'Sorcerer': 'fa-wand-sparkles',
+                'Warlock': 'fa-book-skull',
+                'Wizard': 'fa-hat-wizard'
+            };
+            return icons[className] || 'fa-user';
+        }
+        
+        // Get color for class
+        function getClassColor(className) {
+            const colors = {
+                'Barbarian': 'red',
+                'Bard': 'purple',
+                'Cleric': 'white',
+                'Druid': 'green',
+                'Fighter': 'gray',
+                'Monk': 'blue',
+                'Paladin': 'yellow',
+                'Ranger': 'amber',
+                'Rogue': 'slate',
+                'Sorcerer': 'indigo',
+                'Warlock': 'black',
+                'Wizard': 'blue'
+            };
+            return colors[className] || 'gray';
+        }
+        
+        // Open character form (for new or edit)
+        function openCharacterForm(id = null) {
+            // Reset form
+            characterForm.reset();
+            document.getElementById('formModalTitle').textContent = id ? 'Редактировать персонажа' : 'Добавить персонажа';
+            
+            if (id) {
+                // Edit mode - populate form with existing data
+                const character = characters.find(char => char.id === id);
+                if (character) {
+                    document.getElementById('characterId').value = character.id;
+                    document.getElementById('name').value = character.name;
+                    document.getElementById('race').value = character.race;
+                    document.getElementById('class').value = character.class;
+                    document.getElementById('level').value = character.level;
+                    document.getElementById('background').value = character.background || '';
+                    document.getElementById('alignment').value = character.alignment || '';
+                    document.getElementById('strength').value = character.strength;
+                    document.getElementById('dexterity').value = character.dexterity;
+                    document.getElementById('constitution').value = character.constitution;
+                    document.getElementById('intelligence').value = character.intelligence;
+                    document.getElementById('wisdom').value = character.wisdom;
+                    document.getElementById('charisma').value = character.charisma;
+                    document.getElementById('experience').value = character.experience || 0;
+                    document.getElementById('inventory').value = character.inventory || '';
+                    document.getElementById('spells').value = character.spells || '';
+                    document.getElementById('features').value = character.features || '';
+                    document.getElementById('notes').value = character.notes || '';
+                }
+            } else {
+                // New character - set some defaults
+                document.getElementById('level').value = 1;
+                document.getElementById('strength').value = 10;
+                document.getElementById('dexterity').value = 10;
+                document.getElementById('constitution').value = 10;
+                document.getElementById('intelligence').value = 10;
+                document.getElementById('wisdom').value = 10;
+                document.getElementById('charisma').value = 10;
+                document.getElementById('experience').value = 0;
+            }
+            
+            // Show the modal
+            characterFormModal.classList.remove('hidden');
+        }
+        
+        // Update dashboard statistics
+        function updateStats() {
+            totalCharactersEl.textContent = characters.length;
+            
+            if (characters.length > 0) {
+                // Calculate average level
+                const totalLevel = characters.reduce((sum, char) => sum + parseInt(char.level), 0);
+                const averageLevel = (totalLevel / characters.length).toFixed(1);
+                avgLevelEl.textContent = averageLevel;
+                
+                // Find most common class
+                const classCounts = {};
+                characters.forEach(char => {
+                    classCounts[char.class] = (classCounts[char.class] || 0) + 1;
+                });
+                const mostCommonClass = Object.keys(classCounts).reduce((a, b) => 
+                    classCounts[a] > classCounts[b] ? a : b
+                );
+                commonClassEl.textContent = mostCommonClass;
+                
+                // Find most common race
+                const raceCounts = {};
+                characters.forEach(char => {
+                    raceCounts[char.race] = (raceCounts[char.race] || 0) + 1;
+                });
+                const mostCommonRace = Object.keys(raceCounts).reduce((a, b) => 
+                    raceCounts[a] > raceCounts[b] ? a : b
+                );
+                commonRaceEl.textContent = mostCommonRace;
+            } else {
+                avgLevelEl.textContent = '0';
+                commonClassEl.textContent = '-';
+                commonRaceEl.textContent = '-';
+            }
+        }
+        
+        // Initialize the app
+        
+    </script>
+</body>
+</html>

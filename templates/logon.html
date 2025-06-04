@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Бросок20 | Вход</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #0f172a;
+            color: #e2e8f0;
+            overflow-x: hidden;
+            position: relative;
+        }
+        .title-font {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+        }
+        .main-bg {
+            background-color: #1e293b;
+        }
+        .accent {
+            color: #f59e0b;
+        }
+        .tab-active {
+            background-color: #f59e0b;
+            color: #0f172a;
+            border-bottom: 4px solid #f59e0b;
+            font-weight: bold;
+        }
+        .tab-inactive {
+            background-color: #334155;
+            color: #e2e8f0;
+            border-bottom: 4px solid #1e293b;
+        }
+        .input-focus:focus {
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.3);
+            border-color: #f59e0b;
+        }
+        .modal-content {
+            background-color: #1e293b;
+            border: 3px solid #f59e0b;
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+        }
+        .dice {
+            position: absolute;
+            opacity: 0.15;
+            z-index: 0;
+            filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.3));
+            animation: float 8s ease-in-out infinite;
+        }
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+        .dice:nth-child(1) { top: 10%; left: 5%; animation-delay: 0s; }
+        .dice:nth-child(2) { top: 60%; left: 80%; animation-delay: 1s; }
+        .dice:nth-child(3) { top: 30%; left: 25%; animation-delay: 2s; }
+        .dice:nth-child(4) { top: 80%; left: 60%; animation-delay: 3s; }
+        .dice:nth-child(5) { top: 20%; right: 5%; animation-delay: 4s; }
+        .password-meter {
+            height: 4px;
+            transition: width 0.3s, background-color 0.3s;
+        }
+        .input-icon {
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .fa-solid.fa-user-shield, .fa-solid.fa-scroll {
+            color: #f59e0b;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 50;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(5px);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <!-- Floating Dice Background Elements -->
+    <i class="dice text-6xl fas fa-dice-d20"></i>
+    <i class="dice text-5xl fas fa-dice-d6"></i>
+    <i class="dice text-7xl fas fa-dice-d10"></i>
+    <i class="dice text-6xl fas fa-dice-d12"></i>
+    <i class="dice text-4xl fas fa-dice-d20"></i>
+
+    <!-- Main Auth Container -->
+    <div class="w-full max-w-md relative z-10">
+        <!-- Title and Logo -->
+        <div class="flex flex-col items-center mb-8">
+            <div class="flex items-center justify-center mb-2">
+                <div class="w-10 h-10 rounded-full bg-amber-500 flex items-center justify-center font-bold text-xl accent mr-2">Б</div>
+                <h1 class="text-4xl title-font accent">Бросок20</h1>
+            </div>
+            <p class="text-sm text-gray-400 italic">Российская платформа для настольных RPG</p>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="flex mb-8 rounded-t-lg overflow-hidden">
+            <button id="login-tab" class="flex-1 py-3 px-4 tab-active title-font transition-all duration-300 outline-none focus:ring-2 focus:ring-amber-500 focus:ring-opacity-50">
+                <i class="fas fa-scroll mr-2"></i>Вход
+            </button>
+            <button id="register-tab" class="flex-1 py-3 px-4 tab-inactive title-font transition-all duration-300 outline-none focus:ring-2 focus:ring-amber-500 focus:ring-opacity-50">
+                <i class="fas fa-user-plus mr-2"></i>Регистрация
+            </button>
+        </div>
+
+        <!-- Login Form -->
+        <div id="login-form" class="main-bg p-8 rounded-lg shadow-xl border-2 border-amber-500 transform transition-all duration-500">
+            <form id="login" class="space-y-5">
+                <div class="relative">
+                    <label for="login-email" class="block text-sm font-medium text-gray-300 mb-1">Email или имя пользователя</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-user text-gray-500"></i>
+                        </div>
+                        <input type="text" id="login-email" name="email" class="input-focus w-full pl-10 pr-3 py-2 rounded border border-gray-700 bg-gray-900 focus:outline-none text-gray-100" placeholder="wizard@example.com" required>
+                    </div>
+                </div>
+                <div class="relative">
+                    <label for="login-password" class="block text-sm font-medium text-gray-300 mb-1">Пароль</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-key text-gray-500"></i>
+                        </div>
+                        <input type="password" id="login-password" name="password" class="input-focus w-full pl-10 pr-3 py-2 rounded border border-gray-700 bg-gray-900 focus:outline-none text-gray-100" placeholder="••••••••" required>
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer" onclick="togglePasswordVisibility('login-password')">
+                            <i class="fas fa-eye text-gray-500 hover:text-gray-300"></i>
+                        </div>
+                    </div>
+                    <div class="flex justify-end mt-1">
+                        <a href="#" onclick="showForgotPasswordModal()" class="text-xs text-amber-500 hover:text-amber-400">Забыли пароль?</a>
+                    </div>
+                </div>
+                <div>
+                    <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-gray-900 bg-amber-500 hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors duration-300">
+                        Войти
+                    </button>
+                </div>
+                <div class="relative flex items-center">
+                    <div class="flex-grow border-t border-gray-400 opacity-50"></div>
+                    <span class="flex-shrink mx-4 text-xs text-gray-500">ИЛИ</span>
+                    <div class="flex-grow border-t border-gray-400 opacity-50"></div>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <button type="button" class="w-full inline-flex justify-center py-2 px-2 border border-gray-700 rounded-md shadow-sm bg-gray-900 text-sm font-medium text-gray-100 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500">
+                        <i class="fab fa-google text-red-500"></i>
+                    </button>
+                    <button type="button" class="w-full inline-flex justify-center py-2 px-2 border border-gray-700 rounded-md shadow-sm bg-gray-900 text-sm font-medium text-gray-100 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500">
+                        <i class="fab fa-discord text-blue-500"></i>
+                    </button>
+                    <button type="button" class="w-full inline-flex justify-center py-2 px-2 border border-gray-700 rounded-md shadow-sm bg-gray-900 text-sm font-medium text-gray-100 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500">
+                        <i class="fab fa-twitch text-purple-500"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Register Form (Initially Hidden) -->
+        <div id="register-form" class="hidden main-bg p-8 rounded-lg shadow-xl border-2 border-amber-500 transform transition-all duration-500">
+            <form id="register" class="space-y-5">
+                <div class="relative">
+                    <label for="register-username" class="block text-sm font-medium text-gray-300 mb-1">Имя пользователя</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-user text-gray-500"></i>
+                        </div>
+                        <input type="text" id="register-username" name="username" class="input-focus w-full pl-10 pr-3 py-2 rounded border border-gray-700 bg-gray-900 focus:outline-none text-gray-100" placeholder="Elminster" required minlength="3" maxlength="20">
+                    </div>
+                    <p id="username-availability" class="text-xs mt-1 hidden"></p>
+                </div>
+                <div class="relative">
+                    <label for="register-email" class="block text-sm font-medium text-gray-300 mb-1">Email</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-envelope text-gray-500"></i>
+                        </div>
+                        <input type="email" id="register-email" name="email" class="input-focus w-full pl-10 pr-3 py-2 rounded border border-gray-700 bg-gray-900 focus:outline-none text-gray-100" placeholder="wizard@example.com" required>
+                    </div>
+                    <p id="email-availability" class="text-xs mt-1 hidden"></p>
+                </div>
+                <div class="relative">
+                    <label for="register-password" class="block text-sm font-medium text-gray-300 mb-1">Пароль</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-lock text-gray-500"></i>
+                        </div>
+                        <input type="password" id="register-password" name="password" class="input-focus w-full pl-10 pr-3 py-2 rounded border border-gray-700 bg-gray-900 focus:outline-none text-gray-100" placeholder="••••••••" required minlength="8" oninput="updatePasswordStrength()">
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer" onclick="togglePasswordVisibility('register-password')">
+                            <i class="fas fa-eye text-gray-500 hover:text-gray-300"></i>
+                        </div>
+                    </div>
+                    <div id="password-meter" class="w-full bg-gray-700 rounded-full h-1.5 overflow-hidden mt-1">
+                        <div id="password-meter-fill" class="h-full password-meter"></div>
+                    </div>
+                    <p id="password-strength-text" class="text-xs mt-1"></p>
+                </div>
+                <div class="relative">
+                    <label for="register-confirm-password" class="block text-sm font-medium text-gray-300 mb-1">Повторите пароль</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-lock text-gray-500"></i>
+                        </div>
+                        <input type="password" id="register-confirm-password" class="input-focus w-full pl-10 pr-3 py-2 rounded border border-gray-700 bg-gray-900 focus:outline-none text-gray-100" placeholder="••••••••" required minlength="8" oninput="checkPasswordMatch()">
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer" onclick="togglePasswordVisibility('register-confirm-password')">
+                            <i class="fas fa-eye text-gray-500 hover:text-gray-300"></i>
+                        </div>
+                    </div>
+                    <p id="password-match-message" class="text-xs mt-1"></p>
+                </div>
+                <div class="relative">
+                    <label for="character-name" class="block text-sm font-medium text-gray-300 mb-1">Имя персонажа (необязательно)</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                        <input type="text" id="character-name" class="input-focus w-full pl-10 pr-3 py-2 rounded border border-gray-700 bg-gray-900 focus:outline-none text-gray-100" placeholder="Gandalf the Grey">
+                    </div>
+                </div>
+                <div class="flex items-start">
+                    <div class="flex items-center h-5">
+                        <input id="terms-checkbox" type="checkbox" class="focus:ring-amber-500 h-4 w-4 text-amber-600 border-gray-700 rounded" required>
+                    </div>
+                    <div class="ml-3 text-sm">
+                        <label for="terms-checkbox" class="font-medium text-gray-300">Я принимаю <a href="#" class="text-amber-500 hover:text-amber-400">условия</a> и <a href="#" class="text-amber-500 hover:text-amber-400">политику конфиденциальности</a></label>
+                    </div>
+                </div>
+                <div>
+                    <button type="submit" id="register-button" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-gray-900 bg-amber-500 hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors duration-300">
+                        Зарегистрироваться
+                    </button>
+                </div>
+                <div class="text-center text-xs text-gray-400">
+                    Уже есть аккаунт? <button type="button" onclick="switchToLogin()" class="text-amber-500 hover:text-amber-400 font-medium">Войти</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-6 text-center text-xs text-gray-500">
+            <p>© 2025 Бросок20. Все права защищены.</p>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div id="forgot-password-modal" class="modal">
+        <div class="modal-content relative mx-auto p-8 mt-16 max-w-sm rounded-lg">
+            <div class="absolute top-0 right-0 pt-4 pr-4">
+                <button onclick="hideForgotPasswordModal()" class="text-gray-400 hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 rounded-md">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="text-center">
+                <i class="fas fa-key text-4xl text-amber-500 mb-4"></i>
+                <h3 class="text-lg font-medium title-font text-white mb-2">Восстановление пароля</h3>
+                <p class="text-sm text-gray-300 mb-6">Введите ваш email, и мы отправим ссылку для сброса пароля.</p>
+            </div>
+            <form id="forgot-password-form" class="space-y-4">
+                <div>
+                    <label for="reset-email" class="sr-only">Email</label>
+                    <input type="email" id="reset-email" class="w-full px-3 py-2 border border-gray-700 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent" placeholder="wizard@example.com" required>
+                </div>
+                <div>
+                    <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-gray-900 bg-amber-500 hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500">
+                        Отправить ссылку
+                    </button>
+                </div>
+            </form>
+            <p class="mt-4 text-center text-xs text-gray-400">
+                Вспомнили пароль? <button onclick="hideForgotPasswordModal(); switchToLogin()" class="text-amber-500 hover:text-amber-400 font-medium">Войти</button>
+            </p>
+        </div>
+    </div>
+
+    <!-- Loading Spinner (Hidden by Default) -->
+    <div id="loading-spinner" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="flex flex-col items-center">
+            <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-amber-500 mb-4"></div>
+            <p class="text-white title-font">Загрузка...</p>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const loginTab = document.getElementById('login-tab');
+        const registerTab = document.getElementById('register-tab');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const forgotPasswordModal = document.getElementById('forgot-password-modal');
+        const loadingSpinner = document.getElementById('loading-spinner');
+
+        // Switch between login and register forms
+        function switchToLogin() {
+            loginTab.classList.remove('tab-inactive');
+            loginTab.classList.add('tab-active');
+            registerTab.classList.remove('tab-active');
+            registerTab.classList.add('tab-inactive');
+            loginForm.classList.remove('hidden');
+            registerForm.classList.add('hidden');
+        }
+
+        function switchToRegister() {
+            loginTab.classList.remove('tab-active');
+            loginTab.classList.add('tab-inactive');
+            registerTab.classList.remove('tab-inactive');
+            registerTab.classList.add('tab-active');
+            loginForm.classList.add('hidden');
+            registerForm.classList.remove('hidden');
+        }
+
+        // Event listeners for tabs
+        loginTab.addEventListener('click', switchToLogin);
+        registerTab.addEventListener('click', switchToRegister);
+
+        // Toggle password visibility
+        function togglePasswordVisibility(fieldId) {
+            const field = document.getElementById(fieldId);
+            if (field.type === 'password') {
+                field.type = 'text';
+            } else {
+                field.type = 'password';
+            }
+        }
+
+        // Update password strength meter
+        function updatePasswordStrength() {
+            const password = document.getElementById('register-password').value;
+            const strengthText = document.getElementById('password-strength-text');
+            const meterFill = document.getElementById('password-meter-fill');
+            
+            // Reset strength meter
+            meterFill.style.width = '0%';
+            strengthText.textContent = '';
+            strengthText.className = 'text-xs mt-1';
+            
+            if (password.length === 0) return;
+            
+            // Calculate strength (very simplified)
+            let strength = 0;
+            if (password.length >= 8) strength += 1;
+            if (password.length >= 12) strength += 1;
+            if (/[A-Z]/.test(password)) strength += 1;
+            if (/[0-9]/.test(password)) strength += 1;
+            if (/[^A-Za-z0-9]/.test(password)) strength += 1;
+            
+            // Update UI based on strength
+            const percent = Math.min(strength * 25, 100);
+            meterFill.style.width = percent + '%';
+            
+            let colorClass, text;
+            if (strength <= 1) {
+                colorClass = 'bg-red-500';
+                text = 'Слабый';
+            } else if (strength <= 3) {
+                colorClass = 'bg-yellow-500';
+                text = 'Средний';
+            } else {
+                colorClass = 'bg-green-500';
+                text = 'Сильный';
+            }
+            
+            meterFill.className = `h-full password-meter ${colorClass}`;
+            strengthText.textContent = `Надежность пароля: ${text}`;
+            strengthText.classList.add(colorClass.replace('bg-', 'text-'));
+        }
+
+        // Check if passwords match
+        function checkPasswordMatch() {
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-confirm-password').value;
+            const message = document.getElementById('password-match-message');
+            
+            if (confirmPassword.length === 0) {
+                message.textContent = '';
+                return;
+            }
+            
+            if (password === confirmPassword) {
+                message.textContent = 'Пароли совпадают!';
+                message.className = 'text-xs mt-1 text-green-500';
+            } else {
+                message.textContent = 'Пароли не совпадают';
+                message.className = 'text-xs mt-1 text-red-500';
+            }
+        }
+
+        // --- API-based login/register handlers ---
+        document.getElementById('login').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            showLoading();
+            const formData = new FormData(this);
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                hideLoading();
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.redirect) {
+                        window.location.href = data.redirect;
+                    } else {
+                        window.location.href = '/dashboard';
+                    }
+                } else {
+                    const text = await response.text();
+                    alert(text || "Ошибка входа. Проверьте данные.");
+                }
+            } catch (err) {
+                hideLoading();
+                alert("Ошибка сети или сервера.");
+            }
+        });
+
+        document.getElementById('register').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            showLoading();
+            const formData = new FormData(this);
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                hideLoading();
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.redirect) {
+                        window.location.href = data.redirect;
+                    } else {
+                        window.location.href = '/dashboard';
+                    }
+                } else {
+                    const text = await response.text();
+                    alert(text || "Ошибка регистрации. Проверьте данные.");
+                }
+            } catch (err) {
+                hideLoading();
+                alert("Ошибка сети или сервера.");
+            }
+        });
+
+        document.getElementById('forgot-password-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            showLoading();
+            // Simulate API call
+            setTimeout(() => {
+                hideLoading();
+                alert('Ссылка для сброса пароля отправлена на ваш email!');
+                hideForgotPasswordModal();
+            }, 1500);
+        });
+
+        // Modal controls
+        function showForgotPasswordModal() {
+            forgotPasswordModal.style.display = 'block';
+        }
+
+        function hideForgotPasswordModal() {
+            forgotPasswordModal.style.display = 'none';
+        }
+
+        // Loading spinner controls
+        function showLoading() {
+            loadingSpinner.classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            loadingSpinner.classList.add('hidden');
+        }
+
+        // Simulate checking username/email availability (would be API calls in real app)
+        document.getElementById('register-username').addEventListener('blur', function() {
+            const username = this.value;
+            const message = document.getElementById('username-availability');
+            
+            if (username.length === 0) return;
+            
+            if (username.length < 3) {
+                message.textContent = 'Имя пользователя должно быть не менее 3 символов';
+                message.className = 'text-xs mt-1 text-red-500';
+                message.classList.remove('hidden');
+            } else {
+                // Simulate checking availability
+                const isAvailable = Math.random() > 0.3; // 70% chance of being available
+                message.textContent = isAvailable ? 'Имя пользователя доступно!' : 'Имя пользователя уже занято';
+                message.className = isAvailable ? 'text-xs mt-1 text-green-500' : 'text-xs mt-1 text-red-500';
+                message.classList.remove('hidden');
+            }
+        });
+
+        document.getElementById('register-email').addEventListener('blur', function() {
+            const email = this.value;
+            const message = document.getElementById('email-availability');
+            
+            if (email.length === 0) return;
+            
+            // Basic email validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                message.textContent = 'Пожалуйста, введите корректный email';
+                message.className = 'text-xs mt-1 text-red-500';
+                message.classList.remove('hidden');
+                return;
+            }
+            
+            // Simulate checking availability
+            const isAvailable = Math.random() > 0.4; // 60% chance of being available
+            message.textContent = isAvailable ? 'Email доступен!' : 'Email уже зарегистрирован';
+            message.className = isAvailable ? 'text-xs mt-1 text-green-500' : 'text-xs mt-1 text-red-500';
+            message.classList.remove('hidden');
+        });
+
+        // Close modal when clicking outside the content
+        window.addEventListener('click', function(event) {
+            if (event.target === forgotPasswordModal) {
+                hideForgotPasswordModal();
+            }
+        });
+    </script>
+</body>
+</html>
