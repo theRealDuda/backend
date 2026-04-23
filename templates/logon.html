@@ -86,7 +86,7 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
+<body class="min-h-screen flex items-center justify-center p-4" data-active-tab="{{if .activeTab}}{{.activeTab}}{{else}}login{{end}}">
 
     <!-- Floating Dice Background Elements -->
     <i class="dice text-6xl fas fa-dice-d20"></i>
@@ -118,6 +118,9 @@
 
         <!-- Login Form -->
         <div id="login-form" class="main-bg p-8 rounded-lg shadow-xl border-2 border-amber-500 transform transition-all duration-500">
+            {{if .error}}
+            <div class="mb-4 rounded border border-red-500 bg-red-900/40 p-3 text-sm text-red-200">{{.error}}</div>
+            {{end}}
             <form id="login" class="space-y-5">
                 <div class="relative">
                     <label for="login-email" class="block text-sm font-medium text-gray-300 mb-1">Email или имя пользователя</label>
@@ -169,6 +172,9 @@
 
         <!-- Register Form (Initially Hidden) -->
         <div id="register-form" class="hidden main-bg p-8 rounded-lg shadow-xl border-2 border-amber-500 transform transition-all duration-500">
+            {{if .error}}
+            <div class="mb-4 rounded border border-red-500 bg-red-900/40 p-3 text-sm text-red-200">{{.error}}</div>
+            {{end}}
             <form id="register" class="space-y-5">
                 <div class="relative">
                     <label for="register-username" class="block text-sm font-medium text-gray-300 mb-1">Имя пользователя</label>
@@ -322,6 +328,13 @@
         // Event listeners for tabs
         loginTab.addEventListener('click', switchToLogin);
         registerTab.addEventListener('click', switchToRegister);
+
+        const initialTab = document.body.dataset.activeTab;
+        if (initialTab === 'register') {
+            switchToRegister();
+        } else {
+            switchToLogin();
+        }
 
         // Toggle password visibility
         function togglePasswordVisibility(fieldId) {

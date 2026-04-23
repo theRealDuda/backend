@@ -13,19 +13,16 @@ import (
 
 func ExportCharacterHandler(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Получаем ID персонажа из URL
 		charID := c.Param("id")
 		if charID == "" {
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Не указан ID персонажа"})
 			return
 		}
 
-		fmt.Println("[DEBUG] ExportCharacterHandler called for id:", charID)
-		// Получаем данные персонажа из БД
 		var char models.Character
 		err := db.QueryRow(`
-			SELECT id, user_id, name, race, class, level, 
-				strength, dexterity, constitution, 
+			SELECT id, user_id, name, race, class, level,
+				strength, dexterity, constitution,
 				intelligence, wisdom, charisma,
 				background, alignment, inventory, spells, features, experience, notes
 			FROM characters WHERE id = ?`, charID).Scan(
@@ -35,45 +32,34 @@ func ExportCharacterHandler(db *sql.DB) gin.HandlerFunc {
 			&char.Background, &char.Alignment, &char.Inventory, &char.Spells, &char.Features, &char.Experience, &char.Notes,
 		)
 		if err != nil {
-			fmt.Println("[DEBUG] Character not found or DB error:", err)
 			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Персонаж не найден"})
 			return
 		}
 
-		fmt.Println("[DEBUG] Character loaded:", char)
-
-		// Создаем PDF
 		pdf := CreateCharacterPDF(char)
 
-		// Устанавливаем заголовки для скачивания файла
 		c.Header("Content-Type", "application/pdf")
 		c.Header("Content-Disposition", "attachment; filename=character_"+char.Name+".pdf")
 
-		// Отправляем PDF клиенту
 		err = pdf.Output(c.Writer)
 		if err != nil {
-			fmt.Println("[DEBUG] PDF generation error:", err)
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Ошибка генерации PDF"})
 			return
 		}
-		fmt.Println("[DEBUG] PDF successfully sent for character:", char.Name)
 	}
 }
 
 func CreateCharacterPDF(char models.Character) *gofpdf.Fpdf {
-	// Создаем новый PDF документ
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	pdf.AddUTF8Font("DejaVu", "B", "static/fonts/DejaVuSans-Bold.ttf")
 	pdf.AddUTF8Font("DejaVu", "", "static/fonts/DejaVuSans.ttf")
 	pdf.SetFont("DejaVu", "", 16)
 	pdf.AddPage()
 
-	// Устанавливаем шрифт и добавляем заголовок
 	pdf.SetFont("DejaVu", "B", 16)
 	pdf.Cell(40, 10, "Лист персонажа D&D 5e")
 	pdf.Ln(12)
 
-	// Основная информация о персонаже
 	pdf.SetFont("DejaVu", "B", 12)
 	pdf.Cell(40, 10, "Основная информация")
 	pdf.Ln(8)
@@ -98,7 +84,6 @@ func CreateCharacterPDF(char models.Character) *gofpdf.Fpdf {
 	}
 	pdf.Ln(5)
 
-	// Характеристики персонажа
 	pdf.SetFont("DejaVu", "B", 12)
 	pdf.Cell(40, 10, "Характеристики")
 	pdf.Ln(8)
@@ -117,7 +102,6 @@ func CreateCharacterPDF(char models.Character) *gofpdf.Fpdf {
 		{"Харизма", char.Charisma, "CHA"},
 	}
 
-	// Таблица характеристик
 	pdf.SetFillColor(240, 240, 240)
 	pdf.CellFormat(40, 8, "Характеристика", "1", 0, "C", true, 0, "")
 	pdf.CellFormat(20, 8, "Значение", "1", 0, "C", true, 0, "")
@@ -125,7 +109,7 @@ func CreateCharacterPDF(char models.Character) *gofpdf.Fpdf {
 	pdf.SetFillColor(255, 255, 255)
 
 	for _, a := range abilities {
-		modifier := (a.value - 10) / 2 // Расчет модификатора
+		modifier := (a.value - 10) / 2
 		modStr := fmt.Sprintf("%+d", modifier)
 
 		pdf.CellFormat(40, 8, fmt.Sprintf("%s (%s)", a.name, a.abbr), "1", 0, "", false, 0, "")
@@ -134,7 +118,6 @@ func CreateCharacterPDF(char models.Character) *gofpdf.Fpdf {
 	}
 	pdf.Ln(10)
 
-	// Дополнительные разделы
 	addSection(pdf, "Инвентарь", char.Inventory)
 	addSection(pdf, "Заклинания", char.Spells)
 	addSection(pdf, "Черты и особенности", char.Features)
